@@ -5,6 +5,7 @@
 #include <vector>
 #include <fstream>
 #include <string>
+#include </usr/local/cuda/include/nvtx3/nvToolsExt.h>
 
 double CORNER_1 = 10;
 double CORNER_2 = 20;
@@ -43,15 +44,11 @@ int main(int argc, char **argv){
     double step = (CORNER_2 - CORNER_1) / (size - 1);
 
     clock_t start = clock();
-	#pragma acc enter data copyin(A[0:full_size]) create(Anew[0:full_size])
-    {
-        #pragma acc parallel loop seq gang num_gangs(size) vector vector_length(size)
-        for (int i = 1; i < size - 1; i++){
-            A[i] = CORNER_1 + i * step;
-            A[i * size + (size-1)] = CORNER_2 + i * step;
-            A[i * size] = CORNER_1 + i * step;
-            A[size * (size - 1) + i] = CORNER_4 + i * step;
-        }
+    for (int i = 1; i < size - 1; i++) {
+        A[i] = CORNER_1 + i * step;
+        A[i * size + (size - 1)] = CORNER_2 + i * step;
+        A[i * size] = CORNER_1 + i * step;
+        A[size * (size - 1) + i] = CORNER_4 + i * step;
     }
 
     std::memcpy(Anew, A, sizeof(double) * full_size);
@@ -97,8 +94,6 @@ int main(int argc, char **argv){
     end = clock();
     elapsed_secs = double(end - start) / CLOCKS_PER_SEC;
 
-    #pragma acc exit data copyout(A[0:full_size], Anew[0:full_size])
-    #pragma acc update host(A[0:size * size], Anew[0:size * size], err)
     std::cout << "Error: " << err << std::endl;
     std::cout << "Iter: " << iter << std::endl;
 
